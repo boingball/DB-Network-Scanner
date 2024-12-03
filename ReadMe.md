@@ -1,6 +1,6 @@
 # DB Network Scanner
 A Windows application that Scans local networks quickly - Getting IP, MAC, MACVendor,
-and if supported using SMTP public -  Uptime, Serial, Name, Model, Infom
+and if supported using SMTP public -  Uptime, Serial, Name, Model, Info
 If you have a working SnipeIT Asset Management - Can link via API to get details using MAC Address.
 
 ![Screenshot of the DB Network Scanner application window, showing the application after a network scan has been done.](/assets/DB-Network-Scanner-UI.png)
