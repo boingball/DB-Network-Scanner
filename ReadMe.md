@@ -29,7 +29,7 @@ LICENSE file in the root directory of this source tree.
 
 ## This software is using libraries and functions from the following NuGet Packages
 
-# LextmSharpSnmpLib v12.5.5 by Malcolm Crowe, Lex Li, and other contributors
+### LextmSharpSnmpLib v12.5.5 by Malcolm Crowe, Lex Li, and other contributors
 
 MIT License
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -50,7 +50,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-# Newtonsoft.Json v13.0.3 by James Newton-King
+### Newtonsoft.Json v13.0.3 by James Newton-King
 
 MIT License
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -71,7 +71,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-# RestSharp v112.1.0 by .NET Foundation and Contributors
+### RestSharp v112.1.0 by .NET Foundation and Contributors
 
 Apache-2.0  January 2004
 You may obtain a copy of the License at
