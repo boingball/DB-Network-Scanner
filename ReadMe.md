@@ -3,7 +3,7 @@ A Windows application that Scans local networks quickly - Getting IP, MAC, MACVe
 and if supported using SMTP public -  Uptime, Serial, Name, Model, Infom
 If you have a working SnipeIT Asset Management - Can link via API to get details using MAC Address.
 
-![Screenshot of the DB Network Scanner application window, showing the application after a network scan has been done.](/Assets/DB-Network-Scanner-UI.png)
+![Screenshot of the DB Network Scanner application window, showing the application after a network scan has been done.](/assets/DB-Network-Scanner-UI.png)
 
 ## Requirements 
 .NET 8.0 is required to run
@@ -17,7 +17,7 @@ Run the setup.exe
 ## How to Use
 Open up DB Network Scanner, and click Scan Network.
 Click Settings to enter SnipeIT Details (If you have a working SnipeIT install on the same network or on a public network)
-![Screenshot of the DB Network Scanner settings window, showing the default settings.](/Assets/DB-Network-Scanner-settings.png)
+![Screenshot of the DB Network Scanner settings window, showing the default settings.](/assets/DB-Network-Scanner-settings.png)
 Tick Deep Scan if you want to ping all devices to see if they are there (Slower).
 
 ## License
