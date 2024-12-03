@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Scan_Network.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="SnipeITSupport" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="SnipeITURL" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://snipeit-website:8004</Value>
+    </Setting>
+    <Setting Name="SnipeITPAT" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Personal-Access-Token</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

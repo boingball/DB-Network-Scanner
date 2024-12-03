@@ -1,0 +1,42 @@
+﻿<Window x:Class="Scan_Network.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Scan_Network"
+        mc:Ignorable="d"
+        Title="DB Network Scanner" Height="600" Width="1450">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="104*"/>
+            <ColumnDefinition Width="621*"/>
+        </Grid.ColumnDefinitions>
+        <DataGrid Name="networkDataGrid" IsReadOnly="True" AreRowDetailsFrozen="True" FrozenColumnCount="1" CanUserReorderColumns="False" CanUserResizeColumns="False" VerticalScrollBarVisibility="Visible" AutoGenerateColumns="False" Grid.ColumnSpan="2">
+            <DataGrid.Columns>
+                <DataGridHyperlinkColumn Header="IP" Binding="{Binding IP}" Width="100">
+                    <DataGridHyperlinkColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <EventSetter Event="Hyperlink.RequestNavigate" Handler="Hyperlink_RequestNavigate"/>
+                        </Style>
+                    </DataGridHyperlinkColumn.ElementStyle>
+                </DataGridHyperlinkColumn>
+                <DataGridTextColumn Header="MAC" Binding="{Binding MACAddress}" Width="120"/>
+                <DataGridTextColumn Header="MACVendor" Binding="{Binding MACVendor}" Width="120"/>
+                <DataGridTextColumn Header="Uptime" Binding="{Binding Uptime}" Width="50"/>
+                <DataGridTextColumn Header="Serial" Binding="{Binding Serial}" Width="100"/>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="140"/>
+                <DataGridTextColumn Header="Model" Binding="{Binding Model}" Width="200"/>
+                <DataGridTextColumn Header="Info" Binding="{Binding Info}" Width="500"/>
+                <DataGridTextColumn Header="Ping" Binding="{Binding Ping}" Width="40"/>
+                <DataGridTextColumn Header="P:80" Binding="{Binding Port80}" Width="40"/>
+            </DataGrid.Columns>
+        </DataGrid>
+        <Button Content="Scan Network" HorizontalAlignment="Left" Margin="813,2,0,0" VerticalAlignment="Top" Width="104" Click="Button_Click" Grid.Column="1"/>
+        <Label x:Name="foundDevices" Content="Found Devices : " HorizontalAlignment="Left" Margin="1013,-1,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.644,-0.153" Grid.Column="1"/>
+        <CheckBox x:Name="DeepScan" Content="Deep Scan" HorizontalAlignment="Left" Margin="932,5,0,0" VerticalAlignment="Top" IsChecked="False" Checked="DeepScan_Checked" Unchecked="DeepScan_UnChecked" Grid.Column="1"/>
+        <Image x:Name="GreenLED" HorizontalAlignment="Left" Height="23" Margin="594,2,0,0" VerticalAlignment="Top" Width="24" Source="/green-button.png" Visibility="Hidden" Grid.Column="1"/>
+        <TextBox x:Name="TextIP" HorizontalAlignment="Left" Margin="674,3,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" TextChanged="TextIP_TextChanged" Grid.Column="1"/>
+        <Button x:Name="SettingsButton" Content="Settings" HorizontalAlignment="Left" Margin="165,4,0,0" VerticalAlignment="Top" Height="16" Width="46" FontSize="8" Click="SettingsButton_Click" Grid.ColumnSpan="2"/>
+
+    </Grid>
+</Window>

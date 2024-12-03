@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>Scan_Network</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <Authors>Darren Banfi</Authors>
+    <Company>Darren Banfi</Company>
+    <Description>Scan Network with SnipeIT Support</Description>
+    <Copyright>2024 Darren Banfi</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="green-button.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lextm.SharpSnmpLib" Version="12.5.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="RestSharp" Version="112.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="green-button.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="MACVendors.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+</Project>
