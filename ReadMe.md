@@ -29,8 +29,7 @@ LICENSE file in the root directory of this source tree.
 
 ## This software is using libraries and functions from the following NuGet Packages
 
-### Devolutions.Zxcvbn 1.0.1
-Copyright (c) 2020 Devolutions
+# LextmSharpSnmpLib v12.5.5 by Malcolm Crowe, Lex Li, and other contributors
 
 MIT License
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -51,9 +50,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
----
-
-### PasswordGenerator 2.1.0 by Paul Seal
+# Newtonsoft.Json v13.0.3 by James Newton-King
 
 MIT License
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -74,12 +71,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
----
-
-### ReadablePassphrase 1.4.2 by Murray Grant
+# RestSharp v112.1.0 by .NET Foundation and Contributors
 
 Apache-2.0  January 2004
 You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
-
 
