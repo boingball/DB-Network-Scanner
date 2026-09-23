@@ -40,6 +40,23 @@ namespace Scan_Network
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
+            //async void - an exception escaping here closes the app, so catch everything
+            try
+            {
+                await ScanNetwork();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Scan failed:\n\n" + ex.Message, "DB Network Scanner", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                this.GreenLED.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private async Task ScanNetwork()
+        {
             //All the magic from the Scan button
             //Turn on the GreenLED Circle
             this.GreenLED.Visibility = Visibility.Visible;
@@ -85,10 +102,17 @@ namespace Scan_Network
 
             foreach (var ipAddress in ipAddresses)
             {
-                tasks.Add(Task.Run(async () =>
+                tasks.Add(Task.Run(() =>
                 {
-                    
-                    await ScanIPAddress(ipAddress, port, oid, community, networkdevice, secondIplist);
+                    try
+                    {
+                        ScanIPAddress(ipAddress, port, oid, community, networkdevice, secondIplist);
+                    }
+                    catch (Exception ex)
+                    {
+                        //One bad address must not fault Task.WhenAll and end the whole scan
+                        Debug.WriteLine($"Scan of {ipAddress} failed: {ex}");
+                    }
                 }));
             }
 
@@ -103,7 +127,7 @@ namespace Scan_Network
                 networkdevice.Add(new NetworkDevice()
                 {
                     IP = reconstructedIP.ToString(),
-                    MACAddress = getMacByIp(ip),
+                    RawIP = ip,
                     Uptime = "1",
                     Serial = "0",
                     Name = infoName,
@@ -113,12 +137,36 @@ namespace Scan_Network
                 });
             }
 
+            //The pings and SNMP requests have filled the ARP cache - read it once for the whole scan
+            var arpTable = GetArpTable();
+            foreach (var device in networkdevice)
+            {
+                string macaddress = arpTable.TryGetValue(device.RawIP ?? "", out var mac) ? mac : "00-00-00-00-00-00";
+                device.MACAddress = macaddress;
+                device.MACVendor = MACVendorLookup(macaddress);
+            }
+
+            //Pingable devices that did not answer SNMP - look them up in SnipeIT
+            await Task.WhenAll(networkdevice
+                .Where(device => device.Info == "_Pingable Device")
+                .Select(async device =>
+                {
+                    var result = await SnipeITMACLookup(device.MACAddress ?? "00-00-00-00-00-00");
+                    if (device.Name == "")
+                    {
+                        device.Name = result.assetTag;
+                    }
+                    device.Model = result.ModelName;
+                    device.Serial = result.serialValue;
+                }));
+
             this.networkDataGrid.ItemsSource = networkdevice;
             foundDevices.Content = "Found Devices: " + networkdevice.Count;
             RefreshAndSortDataGrid();
         }
 
-        private async Task ScanIPAddress(string ipAddress, int port, string oid, string community, List<NetworkDevice> networkdevice, List<string> secondIplist)
+        //Runs on up to 254 threads at once - lock the shared lists before adding to them
+        private void ScanIPAddress(string ipAddress, int port, string oid, string community, List<NetworkDevice> networkdevice, List<string> secondIplist)
         {
             try
             {
@@ -128,12 +176,9 @@ namespace Scan_Network
                       new List<Variable> { new Variable(new ObjectIdentifier(oid)) },
                       10);
                 //Need to ping to get MAC
-                Ping p = new Ping();
+                using Ping p = new Ping();
                 PingReply r = p.Send(ipAddress);
                 long pingtime = r.Status == IPStatus.Success ? r.RoundtripTime : -999;
-
-                string macaddress = getMacByIp(ipAddress);
-                string MAVVLU = MACVendorLookup(macaddress);
 
                 foreach (var variable in result)
                 {
@@ -255,7 +300,8 @@ namespace Scan_Network
                     //Santitise uptime (Day.D:Min:Sec.Sec)
                     //Get the Day first
                     int dayPart = uptime.IndexOf(".");
-                    string dayReal = uptime.Substring(0, dayPart);
+                    //No "." when SNMP returned an error string instead of an uptime
+                    string dayReal = dayPart >= 0 ? uptime.Substring(0, dayPart) : "";
                     string TCPString = "NA";
                     //string HTTPPage = "";
                     //Deepscan ticked - try a TCP Connect on port 80
@@ -277,11 +323,10 @@ namespace Scan_Network
                     //Convert IP Addresses, 0xx becomes an Octal in a browser
                     string reconstructedIP = SantitiseIP(ipAddress.ToString());
                     //Add our network device to the list
-                    networkdevice.Add(new NetworkDevice()
+                    var device = new NetworkDevice()
                     {
                         IP = reconstructedIP,
-                        MACAddress = macaddress,
-                        MACVendor = MAVVLU,
+                        RawIP = ipAddress,
                         Uptime = dayReal,
                         Serial = serialNumber,
                         Name = deviceName,
@@ -289,7 +334,11 @@ namespace Scan_Network
                         Info = variable.Data.ToString(),
                         Ping = pingtime,
                         Port80 = TCPString
-                    });
+                    };
+                    lock (networkdevice)
+                    {
+                        networkdevice.Add(device);
+                    }
                 }
             }
             catch (Exception ex)
@@ -314,10 +363,8 @@ namespace Scan_Network
                 }
                 // Handle any exceptions (e.g., timeouts, no response)
                 //Check if we have a real device - add if we do.
-                Ping myPing = new Ping();
+                using Ping myPing = new Ping();
                 PingReply reply = myPing.Send(ipAddress, 50);
-                string macaddress = getMacByIp(ipAddress);
-                string MAVVLU = MACVendorLookup(macaddress);
                 //Check for a device justincase it didn't response in the first timeout
                 string deviceName = "";
                 if (ex.ToString().Contains("System.Net.Sockets"))
@@ -334,32 +381,29 @@ namespace Scan_Network
                     if (ex.ToString().Contains("System.InvalidOperation"))
                     {
                         //Second Scan List
-                        secondIplist.Add(ipAddress);
+                        lock (secondIplist)
+                        {
+                            secondIplist.Add(ipAddress);
+                        }
                     }
                     else
                     {
-
-                        var result = await SnipeITMACLookup(macaddress);
-                        if (deviceName == "")
-                        {
-                            deviceName = result.assetTag;
-                        }
-                        string modelName = result.ModelName;
-                        string serial = result.serialValue;
+                        //MAC, vendor and SnipeIT details are filled in once the scan finishes
                         string reconstructedIP = SantitiseIP(ipAddress.ToString());
-                        networkdevice.Add(new NetworkDevice()
+                        var device = new NetworkDevice()
                         {
                             IP = reconstructedIP.ToString(),
-                            MACAddress = macaddress,
-                            MACVendor = MAVVLU,
+                            RawIP = ipAddress,
                             Uptime = "",
-                            Serial = serial,
                             Name = deviceName,
-                            Model = modelName,
                             Info = "_Pingable Device",
                             Ping = reply.RoundtripTime,
                             Port80 = TCPString
-                        });
+                        };
+                        lock (networkdevice)
+                        {
+                            networkdevice.Add(device);
+                        }
                     }
 
                 }
@@ -448,48 +492,36 @@ namespace Scan_Network
 
         }
 
-        public string getMacByIp(string ip)
+        public Dictionary<string, string> GetArpTable()
         {
-            var macIpPairs = GetAllMacAddressesAndIppairs();
-            int index = macIpPairs.FindIndex(x => x.IpAddress == ip);
-            if (index >= 0)
+            //Read the ARP cache once - IP address to upper case MAC address
+            var arpTable = new Dictionary<string, string>();
+            try
             {
-                return macIpPairs[index].MacAddress.ToUpper();
-            }
-            else
-            {
-                return "00-00-00-00-00-00";
-            }
-        }
+                using System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
+                pProcess.StartInfo.FileName = "arp";
+                pProcess.StartInfo.Arguments = "-a ";
+                pProcess.StartInfo.UseShellExecute = false;
+                pProcess.StartInfo.RedirectStandardOutput = true;
+                pProcess.StartInfo.CreateNoWindow = true;
+                pProcess.Start();
+                string cmdOutput = pProcess.StandardOutput.ReadToEnd();
+                pProcess.WaitForExit();
+                string pattern = @"(?<ip>([0-9]{1,3}\.?){4})\s*(?<mac>([a-f0-9]{2}-?){6})";
 
-        public List<MacIpPair> GetAllMacAddressesAndIppairs()
-        {
-            List<MacIpPair> mip = new List<MacIpPair>();
-            System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
-            pProcess.StartInfo.FileName = "arp";
-            pProcess.StartInfo.Arguments = "-a ";
-            pProcess.StartInfo.UseShellExecute = false;
-            pProcess.StartInfo.RedirectStandardOutput = true;
-            pProcess.StartInfo.CreateNoWindow = true;
-            pProcess.Start();
-            string cmdOutput = pProcess.StandardOutput.ReadToEnd();
-            string pattern = @"(?<ip>([0-9]{1,3}\.?){4})\s*(?<mac>([a-f0-9]{2}-?){6})";
-
-            foreach (Match m in Regex.Matches(cmdOutput, pattern, RegexOptions.IgnoreCase))
-            {
-                mip.Add(new MacIpPair()
+                foreach (Match m in Regex.Matches(cmdOutput, pattern, RegexOptions.IgnoreCase))
                 {
-                    MacAddress = m.Groups["mac"].Value,
-                    IpAddress = m.Groups["ip"].Value
-                });
+                    //The same IP can be listed under more than one interface - keep the first
+                    arpTable.TryAdd(m.Groups["ip"].Value, m.Groups["mac"].Value.ToUpper());
+                }
+            }
+            catch (Exception ex)
+            {
+                //arp.exe missing or blocked - carry on without MAC addresses
+                Debug.WriteLine($"Reading the ARP table failed: {ex}");
             }
 
-            return mip;
-        }
-        public struct MacIpPair
-        {
-            public string MacAddress;
-            public string IpAddress;
+            return arpTable;
         }
 
         public string SantitiseIP(string ipAddress)
@@ -529,15 +561,16 @@ namespace Scan_Network
         {
             //Look for MACVendor via XML loaded in DOC
             string checkMac = macAddress.Replace("-", ":");
+            if (checkMac.Length < 8 || doc.Root == null) { return "Not Found"; }
             checkMac = checkMac.Substring(0, 8);
             var query = doc
                 .Root
                 .Elements()
-                .Where(e => e.Attribute("mac_prefix").Value == checkMac)
-                .Select(e => e.Attribute("vendor_name"))
+                .Where(e => (string?)e.Attribute("mac_prefix") == checkMac)
+                .Select(e => (string?)e.Attribute("vendor_name"))
                 .ToList();
 
-            if (query.Count != 0) { MacVendor = query[0].Value.ToString(); } else { MacVendor = "Not Found"; }
+            MacVendor = query.FirstOrDefault() ?? "Not Found";
 
             return MacVendor;
         }
@@ -552,15 +585,17 @@ namespace Scan_Network
             macAddress = macAddress.Replace("-", ":");
 
             if (Properties.Settings.Default.SnipeITSupport == true) {
+                //Bad URL, unreachable server, certificate or HTTP errors all mean "Not Found"
+                try {
             var options = new RestClientOptions("" + Properties.Settings.Default.SnipeITURL + "/api/v1/hardware?limit=1&offset=0&search=" + macAddress + "&sort=created_at&order=desc");
-            var client = new RestClient(options);
+            using var client = new RestClient(options);
             var request = new RestRequest("");
             request.AddHeader("accept", "application/json");
             //My Test API Key
             request.AddHeader("Authorization", "Bearer" + " " + Properties.Settings.Default.SnipeITPAT);
-            var response = await client.GetAsync(request);
-            if (response.IsSuccessful && response.Content is not null) { 
-                try {
+            //ExecuteGetAsync reports failures in the response - GetAsync throws on them
+            var response = await client.ExecuteGetAsync(request);
+            if (response.IsSuccessful && response.Content is not null) {
                 string responseContent = response.Content.ToString();
             JObject jsonObject = JObject.Parse(responseContent);
             string serialValue = (string)jsonObject["rows"][0]["serial"];
@@ -568,12 +603,8 @@ namespace Scan_Network
             string modelName = (string)jsonObject["rows"][0]["model"]["name"];
             if (assetTag == null) { assetTag = "Not Found"; }
             return (serialValue ?? "Not Found", assetTag ?? "Not Found", modelName ?? "Not Found");
+            }
                 } catch { return ("Not Found", "Not Found", "Not Found"); }
-            }
-            else
-            {
-                return ("Not Found", "Not Found", "Not Found");
-            }
             }
             return ("Not Found", "Not Found", "Not Found");
         }

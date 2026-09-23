@@ -21,6 +21,8 @@ namespace Scan_Network
         public string? Info { get; set; }
         public long Ping { get; set; }
         public string? Port80 { get; set; }
+        //Unpadded IP used for ARP lookups - not shown in the grid
+        public string? RawIP { get; set; }
 
     }
 
